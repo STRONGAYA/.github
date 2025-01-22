@@ -1,0 +1,19 @@
+blank_issues_enabled: false
+
+issue_template:
+  - name: Bug Report
+    description: Report a bug or issue.
+    labels: ["bug"]
+    file: bug_report.md
+  - name: Documentation Improvement
+    description: Suggest improvements or additions to the documentation.
+    labels: ["documentation"]
+    file: documentation_improvement.md
+  - name: Feature Request
+    description: Suggest a new feature or enhancement.
+    labels: ["enhancement"]
+    file: feature_request.md
+  - name: Support Request
+    description: Need help or have questions? Ask here!
+    labels: ["question"]
+    file: support_request.md
