@@ -12,6 +12,9 @@ FILE_URL = "https://api.github.com/repos/{org}/{repo}/contents/{path}"
 # GitHub API endpoint to create or update a file in a repository
 CREATE_OR_UPDATE_URL = "https://api.github.com/repos/{org}/{repo}/contents/{path}"
 
+# GitHub API endpoint to trigger a workflow
+WORKFLOW_DISPATCH_URL = "https://api.github.com/repos/{org}/{repo}/actions/workflows/{workflow_id}/dispatches"
+
 # GitHub token for authentication
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
@@ -53,6 +56,13 @@ def create_or_update_file(org, repo, path, content, message, sha=None):
     if sha:
         data["sha"] = sha
     response = requests.put(CREATE_OR_UPDATE_URL.format(org=org, repo=repo, path=path), headers=HEADERS, json=data)
+    response.raise_for_status()
+
+def trigger_workflow(org, repo, workflow_id):
+    data = {
+        "ref": "main"  # Assuming the workflow should run on the main branch
+    }
+    response = requests.post(WORKFLOW_DISPATCH_URL.format(org=org, repo=repo, workflow_id=workflow_id), headers=HEADERS, json=data)
     response.raise_for_status()
 
 def fetch_apache_licence():
@@ -104,6 +114,12 @@ def main():
         # Update the file in the repository
         create_or_update_file(ORG_NAME, repo_name, "LICENCE", encoded_content, "Update licence with current year and copyright owner", sha)
         print(f"Updated LICENCE file in {repo_name}")
+
+        # Check for the presence of release.yml and trigger it if it exists
+        release_workflow = get_file_contents(ORG_NAME, repo_name, ".github/workflows/release.yml")
+        if release_workflow is not None:
+            print(f"Triggering release.yml workflow in {repo_name}")
+            trigger_workflow(ORG_NAME, repo_name, "release.yml")
 
 if __name__ == "__main__":
     main()

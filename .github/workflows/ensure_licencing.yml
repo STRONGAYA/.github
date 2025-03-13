@@ -1,4 +1,4 @@
-name: Ensure Licence Correctness
+name: Ensure Licence
 
 on:
   push:
@@ -7,6 +7,10 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 0 1 1 *'  # Runs at 00:00 UTC on January 1st
+
+permissions:
+  contents: write
+  workflows: write
 
 jobs:
   check-licence:
@@ -29,7 +33,7 @@ jobs:
     - name: Check and update licence
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        ORG_NAME: STRONGAYA
-        COPYRIGHT_OWNER: STRONGAYA
+        ORG_NAME: ${{ secrets.ORG_NAME }}
+        COPYRIGHT_OWNER: ${{ secrets.COPYRIGHT_OWNER }}
       run: |
         python .github/workflows/check_licence.py
