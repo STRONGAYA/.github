@@ -9,11 +9,8 @@ REPOS_URL = "https://api.github.com/orgs/{org}/repos"
 # GitHub API endpoint to get the contents of a file in a repository
 FILE_URL = "https://api.github.com/repos/{org}/{repo}/contents/{path}"
 
-# GitHub API endpoint to create a file in a repository
-CREATE_URL = "https://api.github.com/repos/{org}/{repo}/contents/{path}"
-
-# GitHub API endpoint to delete a file in a repository
-DELETE_URL = "https://api.github.com/repos/{org}/{repo}/contents/{path}"
+# GitHub API endpoint to create or update a file in a repository
+CREATE_OR_UPDATE_URL = "https://api.github.com/repos/{org}/{repo}/contents/{path}"
 
 # GitHub token for authentication
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
@@ -48,29 +45,14 @@ def get_file_contents(org, repo, path):
     response.raise_for_status()
     return response.json()
 
-def create_file(org, repo, path, content):
+def create_or_update_file(org, repo, path, content, message, sha=None):
     data = {
-        "message": "Add Apache 2.0 licence",
+        "message": message,
         "content": content
     }
-    response = requests.put(CREATE_URL.format(org=org, repo=repo, path=path), headers=HEADERS, json=data)
-    response.raise_for_status()
-
-def update_file(org, repo, path, content, sha):
-    data = {
-        "message": "Update licence with current year and copyright owner",
-        "content": content,
-        "sha": sha
-    }
-    response = requests.put(CREATE_URL.format(org=org, repo=repo, path=path), headers=HEADERS, json=data)
-    response.raise_for_status()
-
-def delete_file(org, repo, path, sha):
-    data = {
-        "message": "Rename LICENSE to LICENCE",
-        "sha": sha
-    }
-    response = requests.delete(DELETE_URL.format(org=org, repo=repo, path=path), headers=HEADERS, json=data)
+    if sha:
+        data["sha"] = sha
+    response = requests.put(CREATE_OR_UPDATE_URL.format(org=org, repo=repo, path=path), headers=HEADERS, json=data)
     response.raise_for_status()
 
 def fetch_apache_licence():
@@ -92,15 +74,14 @@ def main():
             # Encode the Apache 2.0 licence text to base64
             encoded_licence = base64.b64encode(apache_licence_text.encode("utf-8")).decode("utf-8")
             # Create the LICENCE file in the repository
-            create_file(ORG_NAME, repo_name, "LICENCE", encoded_licence)
+            create_or_update_file(ORG_NAME, repo_name, "LICENCE", encoded_licence, "Add Apache 2.0 licence")
             continue
 
         if license_file is not None:
             # Rename LICENSE to LICENCE
             content = license_file["content"]
             sha = license_file["sha"]
-            delete_file(ORG_NAME, repo_name, "LICENSE", sha)
-            create_file(ORG_NAME, repo_name, "LICENCE", content)
+            create_or_update_file(ORG_NAME, repo_name, "LICENCE", content, "Rename LICENSE to LICENCE", sha)
             print(f"Renamed LICENSE to LICENCE in {repo_name}")
 
         content = licence_file["content"]
@@ -121,7 +102,7 @@ def main():
         encoded_content = base64.b64encode(updated_content.encode("utf-8")).decode("utf-8")
 
         # Update the file in the repository
-        update_file(ORG_NAME, repo_name, "LICENCE", encoded_content, sha)
+        create_or_update_file(ORG_NAME, repo_name, "LICENCE", encoded_content, "Update licence with current year and copyright owner", sha)
         print(f"Updated LICENCE file in {repo_name}")
 
 if __name__ == "__main__":
